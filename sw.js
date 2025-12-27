@@ -1,4 +1,4 @@
-const CACHE_NAME = 'offline-toolbelt-v1';
+const CACHE_NAME = 'offline-toolbelt-v2';
 
 const ASSETS = [
   '/',
@@ -8,7 +8,12 @@ const ASSETS = [
   '/pdfSanitizer.bundle.js',
   '/sw.js',
   '/icon-192.png',
-  '/icon-512.png'
+  '/icon-512.png',
+  // External Libraries (Critical for offline support)
+  'https://unpkg.com/@zip.js/zip.js@2.6.12/dist/zip.min.js',
+  'https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js',
+  'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js',
+  'https://unpkg.com/diff@5.1.0/dist/diff.min.js'
 ];
 
 self.addEventListener('install', event => {
