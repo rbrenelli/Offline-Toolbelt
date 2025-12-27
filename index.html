@@ -307,6 +307,9 @@
         <button class="nav-btn" onclick="switchApp('pdf')" title="PDF Tools">
             <span class="icon">📄</span><span class="label">PDF</span>
         </button>
+        <button class="nav-btn" onclick="switchApp('sanitize')" title="PDF Metadata Sanitizer">
+            <span class="icon">🧹</span><span class="label">Sanitize</span>
+        </button>
         <button class="nav-btn" onclick="switchApp('diff')" title="Text Diff">
             <span class="icon">🔍</span><span class="label">Diff</span>
         </button>
@@ -481,6 +484,22 @@
                     <div id="pdf-split-info" style="margin-bottom:15px; font-weight:bold;"></div>
                     <input type="text" id="pdfPageRange" placeholder="e.g. 1-5, 8, 11-13" style="width:100%">
                     <button class="action-btn" onclick="processPdfSplit()" style="margin-top:15px; width:100%">Extract Pages</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="app-sanitize" class="app-view">
+            <h1>PDF Metadata Sanitizer</h1>
+            <p>Remove hidden metadata from PDF files (title, author, producer, timestamps).</p>
+            <div class="card">
+                <div class="drop-zone" onclick="document.getElementById('pdfSanitizeInput').click()"><div>📄 Drop PDF to Sanitize</div><input type="file" id="pdfSanitizeInput" accept=".pdf" hidden></div>
+                <div id="pdf-sanitize-info" style="margin-top:12px;"></div>
+                <div id="pdf-sanitize-result" class="hidden" style="margin-top:12px;">
+                    <div id="pdf-sanitize-metadata" style="margin-bottom:12px; font-family:monospace; white-space:pre-wrap;"></div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button class="action-btn" id="btnSanitize" onclick="processPdfSanitize()">Sanitize & Download</button>
+                        <a id="pdfSanitizeDownload" class="action-btn secondary" style="display:none">Download Sanitized</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -924,6 +943,7 @@
         })();
 
     </script>
+    <script type="module" src="pdfSanitizer.bundle.js"></script>
     <script src="script.js"></script>
 
 <script>

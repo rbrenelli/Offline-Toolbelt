@@ -1,20 +1,20 @@
 {
   "name": "Offline Toolbelt",
   "short_name": "Toolbelt",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#e3f2fd",
   "theme_color": "#006495",
-  "description": "Audio Recorder, EPUB Fixer, and Utilities",
+  "description": "Privacy-respecting offline utilities: Audio Recorder, EPUB Fixer, PDF Tools, Image Editor, and more",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

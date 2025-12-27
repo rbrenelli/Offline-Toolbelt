@@ -5,6 +5,7 @@ const ASSETS = [
   '/index.html',
   '/script.js',
   '/manifest.json',
+  '/pdfSanitizer.bundle.js',
   '/sw.js',
   '/icon-192.png',
   '/icon-512.png'

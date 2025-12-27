@@ -32,9 +32,20 @@ Designed for **offline use**, **GitHub Pages hosting**, and **installable PWA wo
 - Batch processing with ZIP download
 
 ### 📄 PDF Tools
-- Merge multiple PDFs
-- Extract page ranges into new PDFs
+- **Merge** multiple PDFs into one
+- **Extract** page ranges into new PDFs
+- **Sanitizer**: Remove hidden metadata (title, author, producer, timestamps)
 - 100% client‑side via `pdf-lib`
+
+### 🧹 PDF Metadata Sanitizer
+- Strip **sensitive metadata** from PDF files
+- Removes:
+  - Title, Author, Subject
+  - Producer, Creator
+  - Creation & Modification dates
+  - XMP metadata streams
+- Shows before/after SHA256 hashes to verify changes
+- One‑click download of cleaned PDF
 
 ### 🖼️ Image Power Tool
 - Convert between PNG / JPEG / WebP
@@ -74,7 +85,7 @@ This project is designed to be deployed **as‑is** on GitHub Pages.
 
 ### Quick Start
 
-1. Create a new GitHub repository
+1. Create a new GitHub repository (e.g., `Offline-Toolbelt`)
 2. Upload all files from this project to the repo root
 3. Go to **Settings → Pages**
 4. Select:
@@ -88,7 +99,15 @@ Your app will be live at:
 https://<username>.github.io/<repo-name>/
 ```
 
-Chrome will automatically offer to **Install App**.
+Chrome will automatically offer to **Install App** (PWA prompt).
+
+### Notes for GitHub Pages
+
+- All paths in `manifest.json` and `index.html` use **relative URLs** for compatibility
+- Service Worker is cached for offline support
+- First load fetches ~1.2 MB of external CDN libraries (all cached after)
+- Works offline after initial load
+- HTTPS enabled by default on GitHub Pages
 
 ---
 
@@ -120,6 +139,16 @@ The original logic has been:
 - Extended with batch processing and ZIP export
 
 This project complies with the spirit and intent of the original work and credits its source accordingly.
+
+### 🧹 PDF Metadata Sanitizer
+
+The PDF metadata sanitizer integrates:
+
+- **pdf-lib** for PDF document loading and manipulation
+- **Web Crypto API** for SHA-256 hashing (built-in browser standard)
+- **Custom implementation** for metadata stripping and validation
+
+The sanitizer removes common metadata fields that may contain sensitive information about document creation tools, authorship, and timestamps.
 
 ### 🔧 Open‑Source Libraries
 

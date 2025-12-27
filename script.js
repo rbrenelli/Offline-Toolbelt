@@ -337,3 +337,59 @@ async function downloadAll() {
 }
 
 btnDlAll.addEventListener('click', downloadAll)
+
+// ---------------- PDF METADATA SANITIZER BRIDGE ----------------
+document.getElementById('pdfSanitizeInput').onchange = async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  document.getElementById('pdf-sanitize-info').textContent = `Loaded: ${f.name}`;
+  document.getElementById('pdf-sanitize-result').classList.remove('hidden');
+  // store selected file on window for action
+  window._pdfSanitizeFile = f;
+};
+
+// enable drag & drop on the parent drop-zone as well
+try {
+  const inp = document.getElementById('pdfSanitizeInput');
+  const dropZone = inp.parentElement;
+  dropZone.ondragover = e => e.preventDefault();
+  dropZone.ondrop = e => {
+    e.preventDefault();
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+      inp.files = e.dataTransfer.files;
+      inp.dispatchEvent(new Event('change'));
+    }
+  };
+} catch (ex) {
+  console.warn('Sanitize drop zone init failed', ex);
+}
+
+async function processPdfSanitize() {
+  const f = window._pdfSanitizeFile;
+  if (!f) return alert('Drop a PDF first');
+  if (!window.pdfSanitizer || typeof window.pdfSanitizer.processPdfFile !== 'function') {
+    console.error('pdfSanitizer not available on window:', window.pdfSanitizer);
+    document.getElementById('pdf-sanitize-info').textContent = 'Sanitizer not initialized. Check console for errors.';
+    return;
+  }
+  try {
+    document.getElementById('pdf-sanitize-info').textContent = 'Sanitizing...';
+    const res = await window.pdfSanitizer.processPdfFile(f);
+    const meta = res.metadataBefore || {};
+    document.getElementById('pdf-sanitize-metadata').textContent = JSON.stringify(meta, null, 2);
+    const url = URL.createObjectURL(res.sanitizedBlob);
+    const dl = document.getElementById('pdfSanitizeDownload');
+    dl.href = url; dl.style.display = 'inline-flex'; dl.download = `sanitized_${res.originalName}`;
+    document.getElementById('pdf-sanitize-result').classList.remove('hidden');
+    document.getElementById('pdf-sanitize-info').textContent = `Sanitized — SHA256 before: ${res.hashBefore} after: ${res.hashAfter}`;
+  } catch (e) {
+    console.error(e);
+    alert('Sanitization failed: ' + (e && e.message ? e.message : e));
+    document.getElementById('pdf-sanitize-info').textContent = 'Error during sanitization. See console.';
+    // show stack if available
+    if (e && e.stack) {
+      document.getElementById('pdf-sanitize-metadata').textContent = e.stack;
+      document.getElementById('pdf-sanitize-result').classList.remove('hidden');
+    }
+  }
+}
