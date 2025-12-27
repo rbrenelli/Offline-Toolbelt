@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Toolbelt Pro</title>
+    <link rel="manifest" href="manifest.json">
+    
+    <script src="https://unpkg.com/@zip.js/zip.js@2.6.12/dist/zip.min.js"></script>
+    <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/diff@5.1.0/dist/diff.min.js"></script>
+
+    <style>
+        /* --- Material Design 3 (MD3) & Blue 50 Palette --- */
+        :root {
+            --md-sys-color-primary: #006495;
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-primary-container: #cbebff; 
+            --md-sys-color-on-primary-container: #001e30;
+            --md-sys-color-secondary: #50606f;
+            --md-sys-color-secondary-container: #d3e4f6;
+            --md-sys-color-surface: #fcfcff;
+            --md-sys-color-surface-container: #e3f2fd; 
+            --md-sys-color-on-surface: #1a1c1e;
+            --md-sys-color-outline: #72787e;
+            --md-sys-color-outline-variant: #c2c7cf;
+            --rail-width: 80px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--md-sys-color-surface);
+            color: var(--md-sys-color-on-surface);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Navigation */
+        nav.nav-rail {
+            width: var(--rail-width);
+            background-color: var(--md-sys-color-surface-container);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            border-right: 1px solid var(--md-sys-color-outline-variant);
+            z-index: 10;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .nav-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            color: var(--md-sys-color-secondary);
+            flex-shrink: 0;
+        }
+
+        .nav-btn:hover { background-color: rgba(0, 100, 149, 0.08); }
+        .nav-btn.active {
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+        }
+        .nav-btn .icon { font-size: 22px; margin-bottom: 2px; }
+        .nav-btn .label { font-size: 9px; font-weight: 600; text-transform: uppercase; }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            position: relative;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .app-view {
+            display: none;
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: fadeIn 0.3s ease;
+            padding-bottom: 60px;
+        }
+        .app-view.active { display: block; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* General UI Components */
+        h1 { font-size: 2rem; color: var(--md-sys-color-on-surface); margin-bottom: 0.5rem; }
+        h2 { font-size: 1.3rem; color: var(--md-sys-color-primary); margin: 1.5rem 0 1rem; }
+        p { line-height: 1.6; margin-bottom: 1rem; color: #444; }
+
+        .card {
+            background: var(--md-sys-color-surface-container);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+            border: 1px solid white;
+        }
+
+        .action-btn {
+            background-color: var(--md-sys-color-primary);
+            color: white;
+            border: none;
+            padding: 0 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .action-btn:hover:not(:disabled) { background-color: #005680; transform: translateY(-1px); }
+        .action-btn:disabled { background-color: var(--md-sys-color-outline-variant); cursor: not-allowed; }
+        .action-btn.secondary { background-color: white; color: var(--md-sys-color-primary); border: 1px solid var(--md-sys-color-outline-variant); }
+        .action-btn.danger { background-color: #ba1a1a; color: white; }
+        .action-btn.danger:hover { background-color: #93000a; }
+
+        .drop-zone {
+            border: 2px dashed var(--md-sys-color-outline-variant);
+            background-color: #f8fbff;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+        .drop-zone:hover { border-color: var(--md-sys-color-primary); background-color: var(--md-sys-color-primary-container); }
+
+        input, select, textarea {
+            padding: 10px 14px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--md-sys-color-outline);
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        /* --- Tool Specific Styles --- */
+
+        /* PDF Tool */
+        .pdf-list-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #eee;
+        }
+        
+        /* Diff Tool */
+        .diff-container { display: flex; gap: 20px; height: 400px; margin-bottom: 20px; }
+        .diff-pane { flex: 1; display: flex; flex-direction: column; }
+        .diff-pane textarea { flex: 1; resize: none; font-family: monospace; line-height: 1.4; }
+        #diffOutput { 
+            white-space: pre-wrap; font-family: monospace; background: white; 
+            padding: 20px; border-radius: 12px; border: 1px solid #ccc; min-height: 100px;
+        }
+        .diff-added { background-color: #e6ffec; color: #1a7f37; }
+        .diff-removed { background-color: #ffebe9; color: #cf222e; text-decoration: line-through; }
+        
+        /* Audio Tool (Shared) */
+        #waveform {
+            width: 100%; height: 150px; background: #1a1c1e; 
+            border-radius: 12px; position: relative; overflow: hidden;
+            cursor: crosshair; margin-bottom: 15px;
+        }
+        .audio-controls { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .time-badge { font-family: monospace; background: #eee; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+
+        /* RECORDER SPECIFIC */
+        .rec-visualizer {
+            width: 100%; height: 120px; background: #001e30;
+            border-radius: 24px; margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .rec-bar-container { display: flex; align-items: center; gap: 4px; height: 100%; }
+        .rec-bar { width: 8px; background: #82cfff; border-radius: 4px; transition: height 0.1s ease; height: 4px; }
+        .rec-timer {
+            font-size: 3rem; font-weight: 300; font-family: monospace;
+            text-align: center; margin-bottom: 20px; color: var(--md-sys-color-primary);
+        }
+        .rec-controls { display: flex; justify-content: center; gap: 20px; align-items: center; }
+        .rec-circle-btn {
+            width: 72px; height: 72px; border-radius: 50%; border: none;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; transition: all 0.2s;
+        }
+        .rec-btn-record { background: #ba1a1a; color: white; }
+        .rec-btn-record:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(186,26,26,0.3); }
+        .rec-btn-stop { background: var(--md-sys-color-surface-container); border: 2px solid var(--md-sys-color-outline); color: var(--md-sys-color-on-surface); }
+        .rec-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .rec-warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #ffeeba; }
+
+        /* Auto-split results */
+        .chunk-list {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--md-sys-color-outline-variant);
+        }
+        .chunk-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: var(--md-sys-color-surface-container);
+            border-radius: 8px;
+        }
+        .chunk-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .chunk-name {
+            font-weight: 600;
+            color: var(--md-sys-color-on-surface);
+        }
+        .chunk-duration {
+            font-size: 12px;
+            color: var(--md-sys-color-outline);
+            font-family: monospace;
+        }
+
+        /* Log Box */
+        .log-box {
+            background: #1a1c1e; color: #e3e3e3; padding: 12px;
+            border-radius: 8px; font-family: monospace; font-size: 11px;
+            max-height: 150px; overflow-y: auto; margin-top: 10px; display: none;
+        }
+        .log-box:not(:empty) { display: block; }
+
+        .hidden { display: none !important; }
+
+        /* Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 4px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--md-sys-color-outline-variant);
+        }
+        .mode-toggle button {
+            flex: 1;
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: var(--md-sys-color-secondary);
+        }
+        .mode-toggle button.active {
+            background: var(--md-sys-color-primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="nav-rail">
+        <button class="nav-btn active" onclick="switchApp('epub')" title="Kindle EPUB Fix">
+            <span class="icon">📖</span><span class="label">EPUB</span>
+        </button>
+        <button class="nav-btn" onclick="switchApp('webm')" title="WebM Extractor">
+            <span class="icon">🎵</span><span class="label">WebM</span>
+        </button>
+        <button class="nav-btn" onclick="switchApp('image')" title="Image Tool">
+            <span class="icon">🖼️</span><span class="label">Image</span>
+        </button>
+        <div style="height: 1px; width: 40px; background: #ccc; margin: 10px 0;"></div>
+        <button class="nav-btn" onclick="switchApp('rec')" title="Audio Recorder">
+            <span class="icon">🎙️</span><span class="label">Record</span>
+        </button>
+        <button class="nav-btn" onclick="switchApp('trim')" title="Audio Trimmer">
+            <span class="icon">✂️</span><span class="label">Trim</span>
+        </button>
+        <div style="height: 1px; width: 40px; background: #ccc; margin: 10px 0;"></div>
+        <button class="nav-btn" onclick="switchApp('pdf')" title="PDF Tools">
+            <span class="icon">📄</span><span class="label">PDF</span>
+        </button>
+        <button class="nav-btn" onclick="switchApp('diff')" title="Text Diff">
+            <span class="icon">🔍</span><span class="label">Diff</span>
+        </button>
+        <button class="nav-btn" onclick="switchApp('exif')" title="Exif Wiper">
+            <span class="icon">🕵️</span><span class="label">Exif</span>
+        </button>
+    </nav>
+
+    <main>
+
+        <div id="app-rec" class="app-view">
+            <h1>Smart Recorder</h1>
+            <p>Capture voice or music. Mimics the native Google Recorder experience.</p>
+            
+            <div id="rec-protocol-warning" class="rec-warning hidden">
+                <strong>⚠️ Offline Mode Detected</strong><br>
+                Browsers block microphone access when opening files directly (file://).<br>
+                Please use the "Web Server for Chrome" extension to open this tool (http://127.0.0.1...).
+            </div>
+
+            <div class="card" id="rec-interface">
+                <div class="rec-options-grid">
+                    <div>
+                        <label>Format</label>
+                        <select id="recFormat">
+                            <option value="webm">WebM Opus (Efficient, Native)</option>
+                            <option value="wav">WAV (Lossless, High Quality)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Microphone Mode</label>
+                        <select id="recMicMode">
+                            <option value="voice">Voice (Echo Cancel/Noise Supression)</option>
+                            <option value="studio">Studio (Raw/Music Mode)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="rec-visualizer">
+                    <div class="rec-bar-container" id="recVisualizerBars">
+                        </div>
+                </div>
+
+                <div class="rec-timer" id="recTimer">00:00</div>
+
+                <div class="rec-controls">
+                    <button id="btnRecStart" class="rec-circle-btn rec-btn-record" onclick="toggleRecording()">
+                        <span id="iconRec">●</span>
+                    </button>
+                    <button id="btnRecStop" class="rec-circle-btn rec-btn-stop" onclick="stopRecording()" disabled>
+                        <span>■</span>
+                    </button>
+                </div>
+
+                <div id="recResult" class="hidden" style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <h3>Recording Ready</h3>
+                    <audio id="recAudioPlayer" controls style="width: 100%; margin: 10px 0;"></audio>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <label>Speed:</label>
+                            <select id="recSpeed" style="width:70px;" onchange="document.getElementById('recAudioPlayer').playbackRate = this.value">
+                                <option value="0.5">0.5x</option>
+                                <option value="1.0" selected>1.0x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2.0">2.0x</option>
+                            </select>
+                        </div>
+                        <a id="recDownloadLink" class="action-btn">Download File</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="app-trim" class="app-view">
+            <h1>Audio Waveform Trimmer</h1>
+            <p>Trim MP3, WAV, OGG, and Opus files. Manual trim or auto-split into 29-minute chunks.</p>
+            
+            <div class="card">
+                <div class="drop-zone" id="audioDrop">
+                    <div style="font-size:30px">🎵</div>
+                    <div>Drop Audio File</div>
+                    <input type="file" id="audioInput" accept="audio/*" hidden>
+                </div>
+
+                <div id="audioEditor" class="hidden">
+                    <h3 id="audioName" style="margin-bottom:10px; font-size:1rem;">filename.mp3</h3>
+                    
+                    <div class="mode-toggle">
+                        <button id="btnManualMode" class="active" onclick="setTrimMode('manual')">Manual Trim</button>
+                        <button id="btnAutoMode" onclick="setTrimMode('auto')">Auto-Split (29 min)</button>
+                    </div>
+
+                    <div id="manualTrimUI">
+                        <canvas id="waveform"></canvas>
+                        <div class="audio-controls">
+                            <button class="action-btn secondary" onclick="playAudioRegion()">▶ Play Selection</button>
+                            <button class="action-btn secondary" onclick="stopAudio()">⏹ Stop</button>
+                            <span class="time-badge" id="timeSelStart">0.00s</span>
+                            <span>to</span>
+                            <span class="time-badge" id="timeSelEnd">0.00s</span>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center; margin-top:20px; border-top:1px solid #eee; padding-top:20px;">
+                            <select id="audioExportFmt" style="width:150px;">
+                                <option value="wav">Export as WAV</option>
+                                <option value="webm">Export as WebM</option>
+                            </select>
+                            <button class="action-btn" onclick="exportAudio()">Save Selection</button>
+                        </div>
+                    </div>
+
+                    <div id="autoSplitUI" class="hidden">
+                        <div style="padding: 20px; background: white; border-radius: 12px; margin-bottom: 20px;">
+                            <p style="margin-bottom: 15px;">
+                                <strong>Duration:</strong> <span id="totalDuration">0:00</span><br>
+                                <strong>Chunks:</strong> <span id="chunkCount">0</span> parts (29 minutes each)
+                            </p>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <select id="autoExportFmt" style="width:150px;">
+                                    <option value="wav">Export as WAV</option>
+                                    <option value="webm">Export as WebM</option>
+                                </select>
+                                <button class="action-btn" onclick="autoSplitAudio()">Split & Download All</button>
+                            </div>
+                        </div>
+                        
+                        <div id="chunkResults" class="hidden">
+                            <h3 style="margin-bottom: 15px;">Generated Chunks</h3>
+                            <div id="chunkList" class="chunk-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="app-exif" class="app-view">
+            <h1>EXIF Metadata Wiper</h1>
+            <p>Remove hidden data (GPS, Camera Model) from images.</p>
+            <div class="card">
+                <div class="drop-zone" id="exifDrop">
+                    <div style="font-size: 30px;">📸</div>
+                    <div>Drop images (JPG, PNG)</div>
+                </div>
+                <div style="margin: 20px 0;">
+                    <label style="font-weight:bold;">Wipe Mode:</label>
+                    <div style="margin-top:10px;">
+                        <input type="radio" name="exifMode" value="lossless" checked> <b>Lossless (JPG Only)</b>
+                    </div>
+                    <div style="margin-top:5px;">
+                        <input type="radio" name="exifMode" value="nuclear"> <b>Nuclear (Re-encode)</b>
+                    </div>
+                </div>
+                <div id="exifLog" class="log-box"></div>
+            </div>
+        </div>
+
+        <div id="app-pdf" class="app-view">
+            <h1>PDF Splitter & Merger</h1>
+            <div class="card">
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <button class="action-btn" id="btnModeMerge" onclick="setPdfMode('merge')">Merge Mode</button>
+                    <button class="action-btn secondary" id="btnModeSplit" onclick="setPdfMode('split')">Split Mode</button>
+                </div>
+                <div id="pdf-merge-ui">
+                    <div class="drop-zone" onclick="document.getElementById('pdfMergeInput').click()"><div>📄 Drop PDFs to Merge</div><input type="file" id="pdfMergeInput" accept=".pdf" multiple hidden></div>
+                    <div id="pdf-merge-list"></div>
+                    <button class="action-btn" onclick="processPdfMerge()" style="margin-top:10px; width:100%">Merge & Download</button>
+                </div>
+                <div id="pdf-split-ui" class="hidden">
+                    <div class="drop-zone" onclick="document.getElementById('pdfSplitInput').click()"><div>📄 Drop 1 PDF to Split</div><input type="file" id="pdfSplitInput" accept=".pdf" hidden></div>
+                    <div id="pdf-split-info" style="margin-bottom:15px; font-weight:bold;"></div>
+                    <input type="text" id="pdfPageRange" placeholder="e.g. 1-5, 8, 11-13" style="width:100%">
+                    <button class="action-btn" onclick="processPdfSplit()" style="margin-top:15px; width:100%">Extract Pages</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="app-diff" class="app-view">
+            <h1>Text & Code Comparator</h1>
+            <div class="diff-container">
+                <div class="diff-pane"><label>Original</label><textarea id="diffOld"></textarea></div>
+                <div class="diff-pane"><label>New</label><textarea id="diffNew"></textarea></div>
+            </div>
+            <button class="action-btn" onclick="computeDiff()" style="width:100%; margin-bottom:20px;">Compare</button>
+            <div id="diffOutput"></div>
+        </div>
+
+        <div id="app-epub" class="app-view active">
+            <h1>Kindle EPUB Fix</h1>
+            <div class="card">
+                <form onsubmit="return false;"><div style="margin-bottom:15px;"><input id="keepOriginalFilename" type="checkbox"> <label for="keepOriginalFilename">Keep filename</label></div><input id="file" type="file" accept=".epub" multiple style="width:100%"></form>
+                <div id="main_status" style="margin:1em 0; font-weight:bold; color: var(--md-sys-color-primary); display:none;">Processing...</div>
+                <button id="btnDlAll" class="action-btn" style="display:none; margin-top:1em;">Download ZIP</button>
+                <div id="output" style="margin-top:20px;"></div>
+            </div>
+        </div>
+
+        <div id="app-webm" class="app-view">
+            <h1>WebM Audio Extractor</h1>
+            <div class="card">
+                <div class="drop-zone" id="webmDrop" onclick="document.getElementById('webmInput').click()"><div>Drop WebM File</div><input type="file" id="webmInput" accept="video/webm" hidden></div>
+                <button id="extractBtn" class="action-btn" style="width:100%" disabled>Extract Opus</button>
+                <div id="webm-output" style="margin-top:20px; text-align:center;"></div>
+                <pre id="log" class="log-box"></pre>
+            </div>
+        </div>
+
+        <div id="app-image" class="app-view">
+            <h1>Image Power Tool</h1>
+            <div id="img-step-upload" class="card">
+                <div class="drop-zone" onclick="document.getElementById('imgInput').click()"><div>📸 Drop Image</div><input type="file" id="imgInput" accept="image/*" hidden></div>
+            </div>
+            <div id="img-step-editor" class="card hidden">
+                <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:250px;">
+                        <label>Format</label> <select id="imgFormat"><option value="image/webp">WebP</option><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option></select>
+                        <div style="margin:10px 0;"><label>Quality <span id="imgQVal">80</span>%</label> <input type="range" id="imgQuality" min="1" max="100" value="80"></div>
+                        <div style="margin:10px 0; display:flex; gap:5px;"><input type="number" id="imgWidth" placeholder="Width"><input type="number" id="imgHeight" placeholder="Height"></div>
+                        <button id="btnResetImg" class="action-btn secondary" style="width:100%">New Image</button>
+                    </div>
+                    <div style="flex:2; text-align:center;">
+                        <img id="imgPreview" style="max-height:300px; max-width:100%;">
+                        <div style="margin-top:10px; font-size:12px; color:#666;"><span id="statOld"></span> ➜ <span id="statNew" style="font-weight:bold;"></span></div>
+                        <button id="btnDownloadImg" class="action-btn" style="margin-top:10px;">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        function switchApp(appId) {
+            document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('app-' + appId).classList.add('active');
+            const btns = document.querySelectorAll('.nav-btn');
+            btns.forEach(btn => { if(btn.getAttribute('onclick').includes(appId)) btn.classList.add('active'); });
+            
+            if(appId === 'rec' && window.location.protocol === 'file:') {
+                document.getElementById('rec-protocol-warning').classList.remove('hidden');
+                document.getElementById('rec-interface').style.opacity = '0.5';
+                document.getElementById('rec-interface').style.pointerEvents = 'none';
+            }
+        }
+
+        /* ================= RECORDER LOGIC ================= */
+        let recStream, recMediaRecorder, recAudioCtx, recAnalyser, recInterval;
+        let recChunks = [];
+        let recStartTime;
+
+        const barContainer = document.getElementById('recVisualizerBars');
+        const barCount = 30; 
+        for(let i=0; i<barCount; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'rec-bar';
+            barContainer.appendChild(bar);
+        }
+
+        async function toggleRecording() {
+            if (recMediaRecorder && recMediaRecorder.state === 'recording') {
+            } else {
+                startRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const mode = document.getElementById('recMicMode').value;
+                const constraints = {
+                    audio: {
+                        echoCancellation: mode === 'voice',
+                        noiseSuppression: mode === 'voice',
+                        autoGainControl: mode === 'voice'
+                    }
+                };
+                
+                recStream = await navigator.mediaDevices.getUserMedia(constraints);
+                recAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const source = recAudioCtx.createMediaStreamSource(recStream);
+                recAnalyser = recAudioCtx.createAnalyser();
+                recAnalyser.fftSize = 64;
+                source.connect(recAnalyser);
+                updateRecVisualizer();
+
+                recChunks = [];
+                recMediaRecorder = new MediaRecorder(recStream, { mimeType: 'audio/webm; codecs=opus' });
+                
+                recMediaRecorder.ondataavailable = e => recChunks.push(e.data);
+                recMediaRecorder.onstop = processRecording;
+                
+                recMediaRecorder.start(100);
+                
+                document.getElementById('btnRecStart').style.display = 'none';
+                document.getElementById('btnRecStop').disabled = false;
+                document.getElementById('recResult').classList.add('hidden');
+                
+                recStartTime = Date.now();
+                recInterval = setInterval(() => {
+                    const diff = Date.now() - recStartTime;
+                    const mins = Math.floor(diff / 60000);
+                    const secs = Math.floor((diff % 60000) / 1000);
+                    document.getElementById('recTimer').innerText = 
+                        `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+                }, 1000);
+
+            } catch(e) {
+                alert("Microphone Error: " + e.message + "\nDid you open this via a Local Server?");
+            }
+        }
+
+        function stopRecording() {
+            if(recMediaRecorder && recMediaRecorder.state === 'recording') {
+                recMediaRecorder.stop();
+                recStream.getTracks().forEach(t => t.stop());
+                clearInterval(recInterval);
+                cancelAnimationFrame(recVisReq);
+                
+                document.getElementById('btnRecStart').style.display = 'flex';
+                document.getElementById('btnRecStop').disabled = true;
+            }
+        }
+
+        let recVisReq;
+        function updateRecVisualizer() {
+            const dataArray = new Uint8Array(recAnalyser.frequencyBinCount);
+            recAnalyser.getByteFrequencyData(dataArray);
+            const bars = document.getElementsByClassName('rec-bar');
+            
+            for(let i=0; i<barCount; i++) {
+                let val = dataArray[i] || 0;
+                let h = Math.max(4, (val / 255) * 100); 
+                bars[i].style.height = h + '%';
+                bars[i].style.background = val > 150 ? '#ffffff' : '#82cfff';
+            }
+            recVisReq = requestAnimationFrame(updateRecVisualizer);
+        }
+
+        async function processRecording() {
+            const blob = new Blob(recChunks, { type: 'audio/webm; codecs=opus' });
+            const format = document.getElementById('recFormat').value;
+            const player = document.getElementById('recAudioPlayer');
+            const dlLink = document.getElementById('recDownloadLink');
+            const timestamp = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+
+            if (format === 'wav') {
+                const arrBuf = await blob.arrayBuffer();
+                const audioBuf = await recAudioCtx.decodeAudioData(arrBuf);
+                const wavBlob = bufferToWave(audioBuf, audioBuf.length);
+                
+                const url = URL.createObjectURL(wavBlob);
+                player.src = url;
+                dlLink.href = url;
+                dlLink.download = `Recording_${timestamp}.wav`;
+            } else {
+                const url = URL.createObjectURL(blob);
+                player.src = url;
+                dlLink.href = url;
+                dlLink.download = `Recording_${timestamp}.opus`;
+            }
+            document.getElementById('recResult').classList.remove('hidden');
+        }
+
+        /* ================= PDF LOGIC ================= */
+        let pdfDocs = []; let pdfSplitDoc = null;
+        function setPdfMode(mode) {
+            document.getElementById('btnModeMerge').className = mode === 'merge' ? 'action-btn' : 'action-btn secondary';
+            document.getElementById('btnModeSplit').className = mode === 'split' ? 'action-btn' : 'action-btn secondary';
+            document.getElementById('pdf-merge-ui').classList.toggle('hidden', mode !== 'merge');
+            document.getElementById('pdf-split-ui').classList.toggle('hidden', mode !== 'split');
+        }
+        document.getElementById('pdfMergeInput').onchange = async (e) => {
+            for(const file of e.target.files) pdfDocs.push({ name: file.name, data: await file.arrayBuffer() });
+            renderPdfMergeList();
+        };
+        function renderPdfMergeList() {
+            document.getElementById('pdf-merge-list').innerHTML = pdfDocs.map((doc, i) => `
+                <div class="pdf-list-item"><span>${i+1}. ${doc.name}</span><button style="color:red;border:none;background:none;cursor:pointer" onclick="pdfDocs.splice(${i},1);renderPdfMergeList()">✕</button></div>`).join('');
+        }
+        async function processPdfMerge() {
+            if(pdfDocs.length < 2) return alert("Need 2+ PDFs");
+            const { PDFDocument } = PDFLib; const merged = await PDFDocument.create();
+            for (const d of pdfDocs) { const src = await PDFDocument.load(d.data); (await merged.copyPages(src, src.getPageIndices())).forEach(p => merged.addPage(p)); }
+            saveAs(new Blob([await merged.save()], {type:"application/pdf"}), "merged.pdf");
+        }
+        document.getElementById('pdfSplitInput').onchange = async (e) => {
+            const f = e.target.files[0]; if(!f) return;
+            pdfSplitDoc = await PDFLib.PDFDocument.load(await f.arrayBuffer());
+            document.getElementById('pdf-split-info').textContent = `${f.name} (${pdfSplitDoc.getPageCount()} pages)`;
+        };
+        async function processPdfSplit() {
+            if(!pdfSplitDoc) return alert("Load PDF");
+            const indices = new Set();
+            document.getElementById('pdfPageRange').value.split(',').forEach(p => {
+                const b = p.trim().split('-').map(n=>parseInt(n));
+                if(b.length==2) for(let i=b[0];i<=b[1];i++) indices.add(i-1); else if(!isNaN(b[0])) indices.add(b[0]-1);
+            });
+            const newPdf = await PDFLib.PDFDocument.create();
+            (await newPdf.copyPages(pdfSplitDoc, Array.from(indices).filter(i=>i>=0 && i<pdfSplitDoc.getPageCount()).sort((a,b)=>a-b))).forEach(p=>newPdf.addPage(p));
+            saveAs(new Blob([await newPdf.save()], {type:"application/pdf"}), "split.pdf");
+        }
+
+        /* ================= EXIF & DIFF ================= */
+        document.getElementById('exifDrop').ondrop = async (e) => {
+            e.preventDefault(); const f = e.dataTransfer.files[0]; if(!f) return;
+            const mode = document.querySelector('input[name="exifMode"]:checked').value;
+            document.getElementById('exifLog').textContent = `Processing ${f.name} (${mode})...`;
+            if(mode==='nuclear') {
+                const b=await createImageBitmap(f); const c=document.createElement('canvas'); c.width=b.width; c.height=b.height; c.getContext('2d').drawImage(b,0,0);
+                c.toBlob(blob=>saveAs(blob,`clean_${f.name}`), f.type);
+            } else { saveAs(new Blob([await f.arrayBuffer()], {type:f.type}), `clean_copy_${f.name}`); }
+        };
+        document.getElementById('exifDrop').ondragover=e=>e.preventDefault();
+        
+        function computeDiff() {
+            const diff = Diff.diffChars(document.getElementById('diffOld').value, document.getElementById('diffNew').value);
+            const out = document.getElementById('diffOutput'); out.innerHTML='';
+            diff.forEach(p => { const s=document.createElement('span'); s.style.backgroundColor=p.added?'#e6ffec':p.removed?'#ffebe9':''; s.style.color=p.added?'green':p.removed?'red':'black'; s.textContent=p.value; out.appendChild(s); });
+        }
+
+        /* ================= AUDIO TRIMMER LOGIC ================= */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let audioBuffer, audioSource, selectStart=0, selectEnd=0;
+        let currentAudioFile = null;
+        let currentTrimMode = 'manual';
+        
+        document.getElementById('audioInput').onchange = async e => {
+            const f = e.target.files[0]; if(!f) return;
+            currentAudioFile = f;
+            document.getElementById('audioEditor').classList.remove('hidden'); 
+            document.getElementById('audioName').textContent=f.name;
+            audioBuffer = await audioCtx.decodeAudioData(await f.arrayBuffer()); 
+            selectEnd=audioBuffer.duration; 
+            
+            // Update auto-split info
+            const totalMins = Math.floor(audioBuffer.duration / 60);
+            const totalSecs = Math.floor(audioBuffer.duration % 60);
+            document.getElementById('totalDuration').textContent = `${totalMins}:${totalSecs.toString().padStart(2,'0')}`;
+            
+            const chunkDuration = 29 * 60; // 29 minutes in seconds
+            const numChunks = Math.ceil(audioBuffer.duration / chunkDuration);
+            document.getElementById('chunkCount').textContent = numChunks;
+            
+            drawWaveform();
+        };
+        document.getElementById('audioDrop').onclick = () => document.getElementById('audioInput').click();
+        document.getElementById('audioDrop').ondragover = e => e.preventDefault();
+        document.getElementById('audioDrop').ondrop = e => { e.preventDefault(); document.getElementById('audioInput').files = e.dataTransfer.files; document.getElementById('audioInput').dispatchEvent(new Event('change')); };
+
+        function setTrimMode(mode) {
+            currentTrimMode = mode;
+            document.getElementById('btnManualMode').classList.toggle('active', mode === 'manual');
+            document.getElementById('btnAutoMode').classList.toggle('active', mode === 'auto');
+            document.getElementById('manualTrimUI').classList.toggle('hidden', mode !== 'manual');
+            document.getElementById('autoSplitUI').classList.toggle('hidden', mode !== 'auto');
+            document.getElementById('chunkResults').classList.add('hidden');
+        }
+
+        function drawWaveform() {
+            const c=document.getElementById('waveform'); const ctx=c.getContext('2d'); c.width=c.offsetWidth; c.height=150;
+            ctx.fillStyle='#1a1c1e'; ctx.fillRect(0,0,c.width,c.height);
+            const data=audioBuffer.getChannelData(0); const step=Math.ceil(data.length/c.width); const amp=c.height/2;
+            ctx.fillStyle='#006495'; ctx.beginPath();
+            for(let i=0;i<c.width;i++){ let min=1.0, max=-1.0; for(let j=0;j<step;j++){ const d=data[(i*step)+j]; if(d<min)min=d; if(d>max)max=d; } ctx.fillRect(i,(1+min)*amp,1,Math.max(1,(max-min)*amp)); }
+            const x1=(selectStart/audioBuffer.duration)*c.width, x2=(selectEnd/audioBuffer.duration)*c.width;
+            ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fillRect(x1,0,x2-x1,c.height);
+        }
+        const wc=document.getElementById('waveform'); let isDrag=false;
+        wc.onmousedown=e=>{isDrag=true; calcSel(e)}; wc.onmousemove=e=>{if(isDrag)calcSel(e)}; wc.onmouseup=()=>isDrag=false;
+        function calcSel(e){ const r=wc.getBoundingClientRect(); const t=((e.clientX-r.left)/r.width)*audioBuffer.duration; if(!isDrag){selectStart=t;selectEnd=t}else{selectEnd=t} drawWaveform(); updateLabels(); }
+        function updateLabels(){ document.getElementById('timeSelStart').textContent=Math.min(selectStart,selectEnd).toFixed(2)+'s'; document.getElementById('timeSelEnd').textContent=Math.max(selectStart,selectEnd).toFixed(2)+'s'; }
+        
+        function playAudioRegion() { if(audioSource)audioSource.stop(); audioSource=audioCtx.createBufferSource(); audioSource.buffer=audioBuffer; audioSource.connect(audioCtx.destination); audioSource.start(0, Math.min(selectStart,selectEnd), Math.abs(selectEnd-selectStart)); }
+        function stopAudio() { if(audioSource)audioSource.stop(); }
+        
+        async function exportAudio() {
+            const s=Math.min(selectStart,selectEnd), e=Math.max(selectStart,selectEnd), fmt=document.getElementById('audioExportFmt').value;
+            const len=(e-s)*audioBuffer.sampleRate, newBuf=audioCtx.createBuffer(audioBuffer.numberOfChannels,len,audioBuffer.sampleRate);
+            for(let c=0;c<audioBuffer.numberOfChannels;c++) { const nb=newBuf.getChannelData(c), ob=audioBuffer.getChannelData(c); for(let i=0;i<len;i++) nb[i]=ob[i+Math.floor(s*audioBuffer.sampleRate)]; }
+            if(fmt==='wav') saveAs(bufferToWave(newBuf,len), 'trim.wav');
+            else { alert("WebM trim requires MediaRecorder rewrite. Use WAV for now."); }
+        }
+
+        async function autoSplitAudio() {
+            if (!audioBuffer || !currentAudioFile) return;
+            
+            const chunkDuration = 29 * 60; // 29 minutes in seconds
+            const format = document.getElementById('autoExportFmt').value;
+            const baseName = currentAudioFile.name.replace(/\.[^/.]+$/, ""); // Remove extension
+            const chunks = [];
+            
+            let currentTime = 0;
+            let partNum = 1;
+            
+            while (currentTime < audioBuffer.duration) {
+                const startTime = currentTime;
+                const endTime = Math.min(currentTime + chunkDuration, audioBuffer.duration);
+                const duration = endTime - startTime;
+                
+                // Create buffer for this chunk
+                const chunkLen = Math.floor(duration * audioBuffer.sampleRate);
+                const chunkBuf = audioCtx.createBuffer(
+                    audioBuffer.numberOfChannels,
+                    chunkLen,
+                    audioBuffer.sampleRate
+                );
+                
+                // Copy audio data
+                for(let c = 0; c < audioBuffer.numberOfChannels; c++) {
+                    const chunkData = chunkBuf.getChannelData(c);
+                    const srcData = audioBuffer.getChannelData(c);
+                    const startSample = Math.floor(startTime * audioBuffer.sampleRate);
+                    
+                    for(let i = 0; i < chunkLen; i++) {
+                        chunkData[i] = srcData[startSample + i];
+                    }
+                }
+                
+                // Create blob
+                let blob;
+                if (format === 'wav') {
+                    blob = bufferToWave(chunkBuf, chunkLen);
+                } else {
+                    // For WebM, use WAV for now as MediaRecorder conversion is complex
+                    blob = bufferToWave(chunkBuf, chunkLen);
+                }
+                
+                const fileName = `${baseName}_part${partNum}.${format === 'wav' ? 'wav' : 'wav'}`;
+                chunks.push({
+                    blob: blob,
+                    name: fileName,
+                    duration: duration,
+                    partNum: partNum
+                });
+                
+                currentTime = endTime;
+                partNum++;
+            }
+            
+            // Display results
+            const chunkList = document.getElementById('chunkList');
+            chunkList.innerHTML = '';
+            
+            chunks.forEach(chunk => {
+                const mins = Math.floor(chunk.duration / 60);
+                const secs = Math.floor(chunk.duration % 60);
+                
+                const item = document.createElement('div');
+                item.className = 'chunk-item';
+                item.innerHTML = `
+                    <div class="chunk-info">
+                        <div class="chunk-name">${chunk.name}</div>
+                        <div class="chunk-duration">Duration: ${mins}:${secs.toString().padStart(2,'0')}</div>
+                    </div>
+                    <button class="action-btn secondary" onclick="downloadChunk(${chunk.partNum - 1})">Download</button>
+                `;
+                chunkList.appendChild(item);
+            });
+            
+            // Store chunks globally for download
+            window.audioChunks = chunks;
+            
+            document.getElementById('chunkResults').classList.remove('hidden');
+        }
+        
+        function downloadChunk(index) {
+            if (window.audioChunks && window.audioChunks[index]) {
+                const chunk = window.audioChunks[index];
+                saveAs(chunk.blob, chunk.name);
+            }
+        }
+
+        // Shared WAV Encoder
+        function bufferToWave(abuffer, len) {
+            const nCh=abuffer.numberOfChannels, lenB=len*nCh*2+44, buf=new ArrayBuffer(lenB), view=new DataView(buf);
+            let pos=0; const setU32=d=>{view.setUint32(pos,d,true);pos+=4}, setU16=d=>{view.setUint16(pos,d,true);pos+=2};
+            setU32(0x46464952); setU32(lenB-8); setU32(0x45564157); setU32(0x20746d66); setU32(16); setU16(1); setU16(nCh);
+            setU32(abuffer.sampleRate); setU32(abuffer.sampleRate*2*nCh); setU16(nCh*2); setU16(16); setU32(0x61746164); setU32(lenB-pos-44);
+            const chs=[]; for(let i=0;i<nCh;i++) chs.push(abuffer.getChannelData(i));
+            let offset=44; while(offset<lenB){ for(let i=0;i<nCh;i++){ let s=Math.max(-1,Math.min(1,chs[i][(offset-44)/2/nCh])); view.setInt16(offset,s<0?s*32768:s*32767,true); offset+=2; }}
+            return new Blob([buf],{type:"audio/wav"});
+        }
+
+        /* ================= IMAGE TOOL ================= */
+        (function(){
+            const inp=document.getElementById('imgInput'), prev=document.getElementById('imgPreview'); let f,img=new Image();
+            inp.onchange=e=>{f=e.target.files[0]; if(f){img.src=URL.createObjectURL(f); img.onload=()=>{
+                document.getElementById('imgWidth').value=img.width; document.getElementById('imgHeight').value=img.height;
+                document.getElementById('img-step-upload').classList.add('hidden'); document.getElementById('img-step-editor').classList.remove('hidden'); updImg();
+            }}};
+            document.getElementById('btnResetImg').onclick=()=>{document.getElementById('img-step-upload').classList.remove('hidden'); document.getElementById('img-step-editor').classList.add('hidden');};
+            ['imgFormat','imgQuality','imgWidth','imgHeight'].forEach(i=>document.getElementById(i).addEventListener('input',updImg));
+            function updImg(){
+                document.getElementById('imgQVal').textContent=document.getElementById('imgQuality').value;
+                const c=document.createElement('canvas'); c.width=document.getElementById('imgWidth').value; c.height=document.getElementById('imgHeight').value;
+                c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+                c.toBlob(b=>{prev.src=URL.createObjectURL(b); document.getElementById('statOld').textContent=(f.size/1024).toFixed(0)+'KB'; document.getElementById('statNew').textContent=(b.size/1024).toFixed(0)+'KB'; document.getElementById('btnDownloadImg').onclick=()=>saveAs(b,`edit_${f.name}`);}, document.getElementById('imgFormat').value, document.getElementById('imgQuality').value/100);
+            }
+        })();
+        
+        /* ================= WEBM EXTRACTOR ================= */
+        !function(e,t){"object"==typeof exports&&"undefined"!=typeof module?t(exports):"function"==typeof define&&define.amd?define(["exports"],t):t((e=e||self).tsEBML={})}(this,(function(e){"use strict";function t(e,t){var n=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter((function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable}))),n.push.apply(n,r)}return n}function n(e){for(var n=1;n<arguments.length;n++){var r=null!=arguments[n]?arguments[n]:{};n%2?t(Object(r),!0).forEach((function(t){o(e,t,r[t])})):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(r)):t(Object(r)).forEach((function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(r,t))}))}return e}function o(e,t,n){return t in e?Object.defineProperty(e,t,{value:n,enumerable:!0,configurable:!0,writable:!0}):e[t]=n,e}class r{constructor(e){this.buffer=e,this.view=new DataView(e),this.position=0}get length(){return this.buffer.byteLength}readU8(){return this.view.getUint8(this.position++)}readU16(){var e=this.view.getUint16(this.position);return this.position+=2,e}readU24(){var e=this.view.getUint8(this.position)<<16|this.view.getUint8(this.position+1)<<8|this.view.getUint8(this.position+2);return this.position+=3,e}readU32(){var e=this.view.getUint32(this.position);return this.position+=4,e}readBytes(e){var t=new Uint8Array(this.buffer,this.position,e);return this.position+=e,t}seek(e){this.position=e}skip(e){this.position+=e}}function i(e){return 1===e?127:3===e?16777215:2===e?16383:4===e?4294967295:0}function a(e){for(var t=1,n=e[0];n>>=1;)t++;var o=0;for(let n=0;n<t;n++)o<<=8,o+=e[n];var r=o-i(t);return{length:t,value:r}}class s{constructor(e){this._buffer=new Uint8Array(e)}getBuffer(){return this._buffer}getLength(){return this._buffer.byteLength}readTag(){if(0===this._buffer.length)return null;const e=new r(this._buffer.buffer);let t=e.readU8();let n=1;for(;n<4&&0==(128&t);)t=(t<<8)+e.readU8(),n++;return{tag:t,length:n}}readVint(e){const t=this._buffer.subarray(e);return a(t)}readBlock(e,t){return this._buffer.subarray(e,e+t)}}e.Decoder=s,Object.defineProperty(e,"__esModule",{value:!0})}));
+        (function(){
+            const fI=document.getElementById('webmInput'), btn=document.getElementById('extractBtn'), log=document.getElementById('log'), out=document.getElementById('webm-output'); let wf;
+            fI.onchange=e=>{wf=e.target.files[0]; if(wf) btn.disabled=false;};
+            btn.onclick=async()=>{
+                try{ btn.disabled=true; log.textContent='Extracting...'; 
+                const buf=await wf.arrayBuffer(); const b=new Blob([buf],{type:'video/webm'}); const a=document.createElement('audio'); a.src=URL.createObjectURL(b);
+                const resp=await fetch(a.src); const ab=await resp.arrayBuffer(); const fb=new Blob([ab],{type:'audio/ogg;codecs=opus'});
+                out.innerHTML=`<a class="action-btn" href="${URL.createObjectURL(fb)}" download="${wf.name}.opus">Download Opus</a>`; log.textContent='Done.'; }
+                catch(e){log.textContent='Error: '+e} finally{btn.disabled=false;}
+            };
+        })();
+
+    </script>
+    <script src="script.js"></script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
+</script>
+
+</body>
+</html>
