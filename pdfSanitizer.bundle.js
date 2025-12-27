@@ -4,34 +4,47 @@ async function sha256(buffer) {
 }
 
 async function sanitizePdfMetadata(arrayBuffer) {
-  const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, { updateMetadata: false });
+  // 1. Load the original document
+  const originalDoc = await PDFLib.PDFDocument.load(arrayBuffer, { updateMetadata: false });
 
+  // Capture metadata before stripping for the UI report
   const metadataBefore = {
-    title: pdfDoc.getTitle(),
-    author: pdfDoc.getAuthor(),
-    subject: pdfDoc.getSubject(),
-    keywords: pdfDoc.getKeywords(),
-    creator: pdfDoc.getCreator(),
-    producer: pdfDoc.getProducer(),
-    creationDate: pdfDoc.getCreationDate(),
-    modificationDate: pdfDoc.getModificationDate()
+    title: originalDoc.getTitle(),
+    author: originalDoc.getAuthor(),
+    subject: originalDoc.getSubject(),
+    keywords: originalDoc.getKeywords(),
+    creator: originalDoc.getCreator(),
+    producer: originalDoc.getProducer(),
+    creationDate: originalDoc.getCreationDate(),
+    modificationDate: originalDoc.getModificationDate(),
+    pageCount: originalDoc.getPageCount()
   };
 
-  pdfDoc.setTitle('');
-  pdfDoc.setAuthor('');
-  pdfDoc.setSubject('');
-  pdfDoc.setKeywords([]);
-  pdfDoc.setCreator('');
-  pdfDoc.setProducer('');
-  pdfDoc.setCreationDate(new Date(0));
-  pdfDoc.setModificationDate(new Date(0));
+  // 2. Create a BRAND NEW document (Nuclear approach)
+  // This ensures a new File ID and clears hidden dictionary entries automatically
+  const newDoc = await PDFLib.PDFDocument.create();
 
-  const catalog = pdfDoc.catalog;
-  if (catalog.get(PDFLib.PDFName.of('Metadata'))) {
-    catalog.delete(PDFLib.PDFName.of('Metadata'));
-  }
+  // 3. Copy all pages from the original to the new document
+  const indices = originalDoc.getPageIndices();
+  const copiedPages = await newDoc.copyPages(originalDoc, indices);
 
-  const sanitizedBytes = await pdfDoc.save({ useObjectStreams: false, updateFieldAppearances: false });
+  copiedPages.forEach((page) => {
+    newDoc.addPage(page);
+  });
+
+  // 4. Explicitly set empty metadata on the new doc to be safe
+  newDoc.setTitle('');
+  newDoc.setAuthor('');
+  newDoc.setSubject('');
+  newDoc.setKeywords([]);
+  newDoc.setCreator('');
+  newDoc.setProducer('');
+  newDoc.setCreationDate(new Date(0));
+  newDoc.setModificationDate(new Date(0));
+
+  // 5. Save the new document
+  // useObjectStreams: false ensures maximum compatibility
+  const sanitizedBytes = await newDoc.save({ useObjectStreams: false, updateFieldAppearances: false });
 
   return { sanitizedBytes, metadataBefore };
 }
@@ -39,8 +52,12 @@ async function sanitizePdfMetadata(arrayBuffer) {
 async function processPdfFile(file) {
   const buffer = await file.arrayBuffer();
   const hashBefore = await sha256(buffer);
+  
+  // Run the nuclear sanitization
   const { sanitizedBytes, metadataBefore } = await sanitizePdfMetadata(buffer);
+  
   const hashAfter = await sha256(sanitizedBytes);
+  
   return {
     originalName: file.name,
     metadataBefore,
@@ -52,4 +69,4 @@ async function processPdfFile(file) {
 
 window.pdfSanitizer = window.pdfSanitizer || {};
 window.pdfSanitizer.processPdfFile = processPdfFile;
-console.info('pdfSanitizer initialized');
+console.info('pdfSanitizer initialized (Nuclear Mode)');
