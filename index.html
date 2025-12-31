@@ -145,6 +145,12 @@
             margin-bottom: 20px;
         }
         .drop-zone:hover { border-color: var(--md-sys-color-primary); background-color: var(--md-sys-color-primary-container); }
+        .drop-zone:focus-visible {
+            outline: 3px solid var(--md-sys-color-primary);
+            outline-offset: 2px;
+            background-color: var(--md-sys-color-primary-container);
+            border-color: var(--md-sys-color-primary);
+        }
 
         input, select, textarea {
             padding: 10px 14px;
@@ -390,8 +396,8 @@
             <p>Trim MP3, WAV, OGG, and Opus files. Manual trim or auto-split into 29-minute chunks.</p>
             
             <div class="card">
-                <div class="drop-zone" id="audioDrop">
-                    <div style="font-size:30px">🎵</div>
+                <div class="drop-zone" id="audioDrop" tabindex="0" role="button" aria-label="Upload audio file to trim" onkeydown="if(event.key==='Enter'||event.key===' ') this.click()">
+                    <div style="font-size:30px" aria-hidden="true">🎵</div>
                     <div>Drop Audio File</div>
                     <input type="file" id="audioInput" accept="audio/*" hidden>
                 </div>
@@ -450,9 +456,10 @@
             <h1>EXIF Metadata Wiper</h1>
             <p>Remove hidden data (GPS, Camera Model) from images.</p>
             <div class="card">
-                <div class="drop-zone" id="exifDrop">
-                    <div style="font-size: 30px;">📸</div>
+                <div class="drop-zone" id="exifDrop" onclick="document.getElementById('exifInput').click()" tabindex="0" role="button" aria-label="Upload image to wipe EXIF data" onkeydown="if(event.key==='Enter'||event.key===' ') this.click()">
+                    <div style="font-size: 30px;" aria-hidden="true">📸</div>
                     <div>Drop images (JPG, PNG)</div>
+                    <input type="file" id="exifInput" accept="image/jpeg, image/png" hidden>
                 </div>
                 <div style="margin: 20px 0;">
                     <label style="font-weight:bold;">Wipe Mode:</label>
@@ -475,12 +482,12 @@
                     <button class="action-btn secondary" id="btnModeSplit" onclick="setPdfMode('split')">Split Mode</button>
                 </div>
                 <div id="pdf-merge-ui">
-                    <div class="drop-zone" onclick="document.getElementById('pdfMergeInput').click()"><div>📄 Drop PDFs to Merge</div><input type="file" id="pdfMergeInput" accept=".pdf" multiple hidden></div>
+                    <div class="drop-zone" onclick="document.getElementById('pdfMergeInput').click()" tabindex="0" role="button" aria-label="Upload PDFs to merge" onkeydown="if(event.key==='Enter'||event.key===' ') this.click()"><div>📄 Drop PDFs to Merge</div><input type="file" id="pdfMergeInput" accept=".pdf" multiple hidden></div>
                     <div id="pdf-merge-list"></div>
                     <button class="action-btn" onclick="processPdfMerge()" style="margin-top:10px; width:100%">Merge & Download</button>
                 </div>
                 <div id="pdf-split-ui" class="hidden">
-                    <div class="drop-zone" onclick="document.getElementById('pdfSplitInput').click()"><div>📄 Drop 1 PDF to Split</div><input type="file" id="pdfSplitInput" accept=".pdf" hidden></div>
+                    <div class="drop-zone" onclick="document.getElementById('pdfSplitInput').click()" tabindex="0" role="button" aria-label="Upload PDF to split" onkeydown="if(event.key==='Enter'||event.key===' ') this.click()"><div>📄 Drop 1 PDF to Split</div><input type="file" id="pdfSplitInput" accept=".pdf" hidden></div>
                     <div id="pdf-split-info" style="margin-bottom:15px; font-weight:bold;"></div>
                     <input type="text" id="pdfPageRange" placeholder="e.g. 1-5, 8, 11-13" style="width:100%">
                     <button class="action-btn" onclick="processPdfSplit()" style="margin-top:15px; width:100%">Extract Pages</button>
@@ -492,7 +499,7 @@
             <h1>PDF Metadata Sanitizer</h1>
             <p>Remove hidden metadata from PDF files (title, author, producer, timestamps).</p>
             <div class="card">
-                <div class="drop-zone" onclick="document.getElementById('pdfSanitizeInput').click()"><div>📄 Drop PDF to Sanitize</div><input type="file" id="pdfSanitizeInput" accept=".pdf" hidden></div>
+                <div class="drop-zone" onclick="document.getElementById('pdfSanitizeInput').click()" tabindex="0" role="button" aria-label="Upload PDF to sanitize" onkeydown="if(event.key==='Enter'||event.key===' ') this.click()"><div>📄 Drop PDF to Sanitize</div><input type="file" id="pdfSanitizeInput" accept=".pdf" hidden></div>
                 <div id="pdf-sanitize-info" style="margin-top:12px;"></div>
                 <div id="pdf-sanitize-result" class="hidden" style="margin-top:12px;">
                     <div id="pdf-sanitize-metadata" style="margin-bottom:12px; font-family:monospace; white-space:pre-wrap;"></div>
@@ -527,7 +534,7 @@
         <div id="app-webm" class="app-view">
             <h1>WebM Audio Extractor</h1>
             <div class="card">
-                <div class="drop-zone" id="webmDrop" onclick="document.getElementById('webmInput').click()"><div>Drop WebM File</div><input type="file" id="webmInput" accept="video/webm" hidden></div>
+                <div class="drop-zone" id="webmDrop" onclick="document.getElementById('webmInput').click()" tabindex="0" role="button" aria-label="Upload WebM file to extract audio" onkeydown="if(event.key==='Enter'||event.key===' ') this.click()"><div>Drop WebM File</div><input type="file" id="webmInput" accept="video/webm" hidden></div>
                 <button id="extractBtn" class="action-btn" style="width:100%" disabled>Extract Opus</button>
                 <div id="webm-output" style="margin-top:20px; text-align:center;"></div>
                 <pre id="log" class="log-box"></pre>
@@ -537,7 +544,7 @@
         <div id="app-image" class="app-view">
             <h1>Image Power Tool</h1>
             <div id="img-step-upload" class="card">
-                <div class="drop-zone" onclick="document.getElementById('imgInput').click()"><div>📸 Drop Image</div><input type="file" id="imgInput" accept="image/*" hidden></div>
+                <div class="drop-zone" onclick="document.getElementById('imgInput').click()" tabindex="0" role="button" aria-label="Upload image to edit" onkeydown="if(event.key==='Enter'||event.key===' ') this.click()"><div>📸 Drop Image</div><input type="file" id="imgInput" accept="image/*" hidden></div>
             </div>
             <div id="img-step-editor" class="card hidden">
                 <div style="display:flex; gap:20px; flex-wrap:wrap;">
@@ -731,15 +738,20 @@
         }
 
         /* ================= EXIF & DIFF ================= */
-        document.getElementById('exifDrop').ondrop = async (e) => {
-            e.preventDefault(); const f = e.dataTransfer.files[0]; if(!f) return;
+        async function handleExifFile(f) {
+            if(!f) return;
             const mode = document.querySelector('input[name="exifMode"]:checked').value;
             document.getElementById('exifLog').textContent = `Processing ${f.name} (${mode})...`;
             if(mode==='nuclear') {
                 const b=await createImageBitmap(f); const c=document.createElement('canvas'); c.width=b.width; c.height=b.height; c.getContext('2d').drawImage(b,0,0);
                 c.toBlob(blob=>saveAs(blob,`clean_${f.name}`), f.type);
             } else { saveAs(new Blob([await f.arrayBuffer()], {type:f.type}), `clean_copy_${f.name}`); }
+        }
+
+        document.getElementById('exifDrop').ondrop = async (e) => {
+            e.preventDefault(); handleExifFile(e.dataTransfer.files[0]);
         };
+        document.getElementById('exifInput').onchange = (e) => handleExifFile(e.target.files[0]);
         document.getElementById('exifDrop').ondragover=e=>e.preventDefault();
         
         function computeDiff() {
