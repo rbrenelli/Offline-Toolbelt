@@ -12,6 +12,16 @@ const filePicker = document.getElementById('file')
 
 let filenames = [], fixedBlobs = [], dlfilenames = []
 
+function escapeHtml(text) {
+  if (!text) return text;
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function build_output_html(idx, status) {
   const statusDiv = document.createElement('div')
   const dlBtn = document.createElement('button')
@@ -40,7 +50,7 @@ function build_output_html(idx, status) {
 
   const section = document.createElement('section')
   section.style.margin = '2em 0'
-  section.innerHTML = `<h3>${filenames[idx]}</h3>`
+  section.innerHTML = `<h3>${escapeHtml(filenames[idx])}</h3>`
   section.appendChild(statusDiv)
   if (btn) {
     section.appendChild(dlBtn)

@@ -566,6 +566,16 @@
     </main>
 
     <script>
+        window.escapeHtml = function(text) {
+          if (!text) return text;
+          return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        }
+
         function switchApp(appId) {
             document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -712,7 +722,7 @@
         };
         function renderPdfMergeList() {
             document.getElementById('pdf-merge-list').innerHTML = pdfDocs.map((doc, i) => `
-                <div class="pdf-list-item"><span>${i+1}. ${doc.name}</span><button style="color:red;border:none;background:none;cursor:pointer" onclick="pdfDocs.splice(${i},1);renderPdfMergeList()">✕</button></div>`).join('');
+                <div class="pdf-list-item"><span>${i+1}. ${escapeHtml(doc.name)}</span><button style="color:red;border:none;background:none;cursor:pointer" onclick="pdfDocs.splice(${i},1);renderPdfMergeList()">✕</button></div>`).join('');
         }
         async function processPdfMerge() {
             if(pdfDocs.length < 2) return alert("Need 2+ PDFs");
@@ -891,7 +901,7 @@
                 item.className = 'chunk-item';
                 item.innerHTML = `
                     <div class="chunk-info">
-                        <div class="chunk-name">${chunk.name}</div>
+                        <div class="chunk-name">${escapeHtml(chunk.name)}</div>
                         <div class="chunk-duration">Duration: ${mins}:${secs.toString().padStart(2,'0')}</div>
                     </div>
                     <button class="action-btn secondary" onclick="downloadChunk(${chunk.partNum - 1})">Download</button>
@@ -949,7 +959,7 @@
                 try{ btn.disabled=true; log.textContent='Extracting...'; 
                 const buf=await wf.arrayBuffer(); const b=new Blob([buf],{type:'video/webm'}); const a=document.createElement('audio'); a.src=URL.createObjectURL(b);
                 const resp=await fetch(a.src); const ab=await resp.arrayBuffer(); const fb=new Blob([ab],{type:'audio/ogg;codecs=opus'});
-                out.innerHTML=`<a class="action-btn" href="${URL.createObjectURL(fb)}" download="${wf.name}.opus">Download Opus</a>`; log.textContent='Done.'; }
+                out.innerHTML=`<a class="action-btn" href="${URL.createObjectURL(fb)}" download="${escapeHtml(wf.name)}.opus">Download Opus</a>`; log.textContent='Done.'; }
                 catch(e){log.textContent='Error: '+e} finally{btn.disabled=false;}
             };
         })();
