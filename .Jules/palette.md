@@ -1,0 +1,3 @@
+## 2024-05-23 - Accessibility of Actionable Divs
+**Learning:** This app extensively uses `div.drop-zone` as primary action buttons (click to upload). While they work for mouse users via `onclick`, they are invisible to keyboard users and screen readers, creating a major accessibility barrier.
+**Action:** When creating custom interactive elements (like drop zones), always ensure they are focusable (`tabindex="0"`), have appropriate roles (`role="button"`), labels (`aria-label`), and handle keyboard activation (Enter/Space keys). Ideally, wrap them in `<button>` or use `<label>` for the hidden input if possible, but retrofitting with ARIA is a valid fix for existing markup.
