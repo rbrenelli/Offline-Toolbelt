@@ -339,14 +339,14 @@
             <div class="card" id="rec-interface">
                 <div class="rec-options-grid">
                     <div>
-                        <label>Format</label>
+                        <label for="recFormat">Format</label>
                         <select id="recFormat">
                             <option value="webm">WebM Opus (Efficient, Native)</option>
                             <option value="wav">WAV (Lossless, High Quality)</option>
                         </select>
                     </div>
                     <div>
-                        <label>Microphone Mode</label>
+                        <label for="recMicMode">Microphone Mode</label>
                         <select id="recMicMode">
                             <option value="voice">Voice (Echo Cancel/Noise Supression)</option>
                             <option value="studio">Studio (Raw/Music Mode)</option>
@@ -549,9 +549,9 @@
             <div id="img-step-editor" class="card hidden">
                 <div style="display:flex; gap:20px; flex-wrap:wrap;">
                     <div style="flex:1; min-width:250px;">
-                        <label>Format</label> <select id="imgFormat"><option value="image/webp">WebP</option><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option></select>
-                        <div style="margin:10px 0;"><label>Quality <span id="imgQVal">80</span>%</label> <input type="range" id="imgQuality" min="1" max="100" value="80"></div>
-                        <div style="margin:10px 0; display:flex; gap:5px;"><input type="number" id="imgWidth" placeholder="Width"><input type="number" id="imgHeight" placeholder="Height"></div>
+                        <label for="imgFormat">Format</label> <select id="imgFormat"><option value="image/webp">WebP</option><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option></select>
+                        <div style="margin:10px 0;"><label for="imgQuality">Quality <span id="imgQVal">80</span>%</label> <input type="range" id="imgQuality" min="1" max="100" value="80"></div>
+                        <div style="margin:10px 0; display:flex; gap:5px;"><input type="number" id="imgWidth" placeholder="Width" aria-label="Image Width"><input type="number" id="imgHeight" placeholder="Height" aria-label="Image Height"></div>
                         <button id="btnResetImg" class="action-btn secondary" style="width:100%">New Image</button>
                     </div>
                     <div style="flex:2; text-align:center;">
