@@ -407,7 +407,7 @@
                     
                     <div class="mode-toggle">
                         <button id="btnManualMode" class="active" onclick="setTrimMode('manual')">Manual Trim</button>
-                        <button id="btnAutoMode" onclick="setTrimMode('auto')">Auto-Split (29 min)</button>
+                        <button id="btnAutoMode" onclick="setTrimMode('auto')">Auto-Split</button>
                     </div>
 
                     <div id="manualTrimUI">
@@ -432,8 +432,12 @@
                         <div style="padding: 20px; background: white; border-radius: 12px; margin-bottom: 20px;">
                             <p style="margin-bottom: 15px;">
                                 <strong>Duration:</strong> <span id="totalDuration">0:00</span><br>
-                                <strong>Chunks:</strong> <span id="chunkCount">0</span> parts (29 minutes each)
+                                <strong>Chunks:</strong> <span id="chunkCount">0</span> parts (<span id="chunkLenDisplay">29</span> minutes each)
                             </p>
+                            <div style="margin-bottom: 15px; display:flex; align-items:center; gap:10px;">
+                                <label for="chunkLenMin">Split length (min):</label>
+                                <input type="number" id="chunkLenMin" value="29" min="1" style="width: 80px" oninput="updateChunkInfo()">
+                            </div>
                             <div style="display:flex; gap:10px; align-items:center;">
                                 <select id="autoExportFmt" style="width:150px;">
                                     <option value="wav">Export as WAV</option>
@@ -789,12 +793,19 @@
             const totalSecs = Math.floor(audioBuffer.duration % 60);
             document.getElementById('totalDuration').textContent = `${totalMins}:${totalSecs.toString().padStart(2,'0')}`;
             
-            const chunkDuration = 29 * 60; // 29 minutes in seconds
-            const numChunks = Math.ceil(audioBuffer.duration / chunkDuration);
-            document.getElementById('chunkCount').textContent = numChunks;
+            updateChunkInfo();
             
             drawWaveform();
         };
+
+        function updateChunkInfo() {
+            if (!audioBuffer) return;
+            const mins = parseInt(document.getElementById('chunkLenMin').value) || 29;
+            const chunkDuration = mins * 60;
+            const numChunks = Math.ceil(audioBuffer.duration / chunkDuration);
+            document.getElementById('chunkCount').textContent = numChunks;
+            document.getElementById('chunkLenDisplay').textContent = mins;
+        }
         document.getElementById('audioDrop').onclick = () => document.getElementById('audioInput').click();
         document.getElementById('audioDrop').ondragover = e => e.preventDefault();
         document.getElementById('audioDrop').ondrop = e => { e.preventDefault(); document.getElementById('audioInput').files = e.dataTransfer.files; document.getElementById('audioInput').dispatchEvent(new Event('change')); };
@@ -836,7 +847,8 @@
         async function autoSplitAudio() {
             if (!audioBuffer || !currentAudioFile) return;
             
-            const chunkDuration = 29 * 60; // 29 minutes in seconds
+            const mins = parseInt(document.getElementById('chunkLenMin').value) || 29;
+            const chunkDuration = mins * 60;
             const format = document.getElementById('autoExportFmt').value;
             const baseName = currentAudioFile.name.replace(/\.[^/.]+$/, ""); // Remove extension
             const chunks = [];
