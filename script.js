@@ -125,32 +125,11 @@ class EPUBBook {
     }
 
     // Replace all
-    if (bodyIDList.length > 0) {
-      // Sort by length descending to prevent partial matches of longer IDs
-      bodyIDList.sort((a, b) => b[0].length - a[0].length)
-
-      const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      const pattern = bodyIDList.map(pair => escapeRegExp(pair[0])).join('|')
-      const regex = new RegExp(pattern, 'g')
-      const replacements = new Map(bodyIDList)
-
-      for (const filename in this.files) {
-        // Optimization: Use single regex pass instead of nested loops
-        const originalContent = this.files[filename]
-        const replacedSet = new Set()
-
-        const newContent = originalContent.replace(regex, (match) => {
-          replacedSet.add(match)
-          return replacements.get(match)
-        })
-
-        if (originalContent !== newContent) {
-          this.files[filename] = newContent
-          // Log unique replacements to match original behavior's verbosity
-          for (const src of replacedSet) {
-            const target = replacements.get(src)
-            this.fixedProblems.push(`Replaced link target ${src} with ${target} in file ${filename}.`)
-          }
+    for (const filename in this.files) {
+      for (const [src, target] of bodyIDList) {
+        if (this.files[filename].includes(src)) {
+          this.files[filename] = this.files[filename].replaceAll(src, target)
+          this.fixedProblems.push(`Replaced link target ${src} with ${target} in file ${filename}.`)
         }
       }
     }
