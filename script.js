@@ -377,6 +377,7 @@ try {
 async function processPdfSanitize() {
   const f = window._pdfSanitizeFile;
   if (!f) return alert('Drop a PDF first');
+  await loadPDFLib();
   if (!window.pdfSanitizer || typeof window.pdfSanitizer.processPdfFile !== 'function') {
     console.error('pdfSanitizer not available on window:', window.pdfSanitizer);
     document.getElementById('pdf-sanitize-info').textContent = 'Sanitizer not initialized. Check console for errors.';
