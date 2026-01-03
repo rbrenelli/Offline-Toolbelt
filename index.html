@@ -376,7 +376,7 @@
                     
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div style="display:flex; gap:10px; align-items:center;">
-                            <label>Speed:</label>
+                            <label for="recSpeed">Speed:</label>
                             <select id="recSpeed" style="width:70px;" onchange="document.getElementById('recAudioPlayer').playbackRate = this.value">
                                 <option value="0.5">0.5x</option>
                                 <option value="1.0" selected>1.0x</option>
@@ -420,7 +420,7 @@
                             <span class="time-badge" id="timeSelEnd">0.00s</span>
                         </div>
                         <div style="display:flex; gap:10px; align-items:center; margin-top:20px; border-top:1px solid #eee; padding-top:20px;">
-                            <select id="audioExportFmt" style="width:150px;">
+                            <select id="audioExportFmt" style="width:150px;" aria-label="Export format">
                                 <option value="wav">Export as WAV</option>
                                 <option value="webm">Export as WebM</option>
                             </select>
@@ -439,7 +439,7 @@
                                 <input type="number" id="chunkLenMin" value="29" min="1" style="width: 80px" oninput="updateChunkInfo()">
                             </div>
                             <div style="display:flex; gap:10px; align-items:center;">
-                                <select id="autoExportFmt" style="width:150px;">
+                                <select id="autoExportFmt" style="width:150px;" aria-label="Export format">
                                     <option value="wav">Export as WAV</option>
                                     <option value="webm">Export as WebM</option>
                                 </select>
@@ -493,7 +493,7 @@
                 <div id="pdf-split-ui" class="hidden">
                     <div class="drop-zone" onclick="document.getElementById('pdfSplitInput').click()" tabindex="0" role="button" aria-label="Upload PDF to split" onkeydown="if(event.key==='Enter'||event.key===' ') this.click()"><div>📄 Drop 1 PDF to Split</div><input type="file" id="pdfSplitInput" accept=".pdf" hidden></div>
                     <div id="pdf-split-info" style="margin-bottom:15px; font-weight:bold;"></div>
-                    <input type="text" id="pdfPageRange" placeholder="e.g. 1-5, 8, 11-13" style="width:100%">
+                    <input type="text" id="pdfPageRange" placeholder="e.g. 1-5, 8, 11-13" style="width:100%" aria-label="Page range">
                     <button class="action-btn" onclick="processPdfSplit()" style="margin-top:15px; width:100%">Extract Pages</button>
                 </div>
             </div>
