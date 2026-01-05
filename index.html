@@ -387,10 +387,10 @@
                 <div class="rec-timer" id="recTimer">00:00</div>
 
                 <div class="rec-controls">
-                    <button id="btnRecStart" class="rec-circle-btn rec-btn-record" onclick="toggleRecording()">
+            <button id="btnRecStart" class="rec-circle-btn rec-btn-record" onclick="toggleRecording()" aria-label="Start recording" title="Start recording">
                         <span id="iconRec">●</span>
                     </button>
-                    <button id="btnRecStop" class="rec-circle-btn rec-btn-stop" onclick="stopRecording()" disabled>
+            <button id="btnRecStop" class="rec-circle-btn rec-btn-stop" onclick="stopRecording()" disabled aria-label="Stop recording" title="Stop recording">
                         <span>■</span>
                     </button>
                 </div>
@@ -553,7 +553,7 @@
         <div id="app-epub" class="app-view active">
             <h1>Kindle EPUB Fix</h1>
             <div class="card">
-                <form onsubmit="return false;"><div style="margin-bottom:15px;"><input id="keepOriginalFilename" type="checkbox"> <label for="keepOriginalFilename">Keep filename</label></div><input id="file" type="file" accept=".epub" multiple style="width:100%"></form>
+                <form onsubmit="return false;"><div style="margin-bottom:15px;"><input id="keepOriginalFilename" type="checkbox"> <label for="keepOriginalFilename">Keep filename</label></div><input id="file" type="file" accept=".epub" multiple style="width:100%" aria-label="Select EPUB files to fix"></form>
                 <div id="main_status" style="margin:1em 0; font-weight:bold; color: var(--md-sys-color-primary); display:none;">Processing...</div>
                 <button id="btnDlAll" class="action-btn" style="display:none; margin-top:1em;">Download ZIP</button>
                 <div id="output" style="margin-top:20px;"></div>
@@ -766,7 +766,7 @@
         };
         function renderPdfMergeList() {
             document.getElementById('pdf-merge-list').innerHTML = pdfDocs.map((doc, i) => `
-                <div class="pdf-list-item"><span>${i+1}. ${escapeHtml(doc.name)}</span><button style="color:red;border:none;background:none;cursor:pointer" onclick="pdfDocs.splice(${i},1);renderPdfMergeList()">✕</button></div>`).join('');
+                <div class="pdf-list-item"><span>${i+1}. ${escapeHtml(doc.name)}</span><button style="color:red;border:none;background:none;cursor:pointer" onclick="pdfDocs.splice(${i},1);renderPdfMergeList()" aria-label="Remove ${escapeHtml(doc.name)}" title="Remove">✕</button></div>`).join('');
         }
         async function processPdfMerge() {
             if(pdfDocs.length < 2) return alert("Need 2+ PDFs");
@@ -959,7 +959,7 @@
                         <div class="chunk-name">${escapeHtml(chunk.name)}</div>
                         <div class="chunk-duration">Duration: ${mins}:${secs.toString().padStart(2,'0')}</div>
                     </div>
-                    <button class="action-btn secondary" onclick="downloadChunk(${chunk.partNum - 1})">Download</button>
+                    <button class="action-btn secondary" onclick="downloadChunk(${chunk.partNum - 1})" aria-label="Download ${escapeHtml(chunk.name)}">Download</button>
                 `;
                 chunkList.appendChild(item);
             });
