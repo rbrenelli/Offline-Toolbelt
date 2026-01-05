@@ -982,9 +982,13 @@
             const nCh=abuffer.numberOfChannels, lenB=len*nCh*2+44, buf=new ArrayBuffer(lenB), view=new DataView(buf);
             let pos=0; const setU32=d=>{view.setUint32(pos,d,true);pos+=4}, setU16=d=>{view.setUint16(pos,d,true);pos+=2};
             setU32(0x46464952); setU32(lenB-8); setU32(0x45564157); setU32(0x20746d66); setU32(16); setU16(1); setU16(nCh);
-            setU32(abuffer.sampleRate); setU32(abuffer.sampleRate*2*nCh); setU16(nCh*2); setU16(16); setU32(0x61746164); setU32(lenB-pos-44);
+            setU32(abuffer.sampleRate); setU32(abuffer.sampleRate*2*nCh); setU16(nCh*2); setU16(16); setU32(0x61746164); setU32(lenB-44);
             const chs=[]; for(let i=0;i<nCh;i++) chs.push(abuffer.getChannelData(i));
-            let offset=44; while(offset<lenB){ for(let i=0;i<nCh;i++){ let s=Math.max(-1,Math.min(1,chs[i][(offset-44)/2/nCh])); view.setInt16(offset,s<0?s*32768:s*32767,true); offset+=2; }}
+            const pcm=new Int16Array(buf,44);
+            for(let i=0;i<len;i++){ for(let c=0;c<nCh;c++){
+                let s=Math.max(-1,Math.min(1,chs[c][i]));
+                pcm[i*nCh+c] = s<0?s*0x8000:s*0x7FFF;
+            }}
             return new Blob([buf],{type:"audio/wav"});
         }
 
