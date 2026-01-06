@@ -977,15 +977,53 @@
             }
         }
 
-        // Shared WAV Encoder
+        // Shared WAV Encoder (Optimized)
         function bufferToWave(abuffer, len) {
-            const nCh=abuffer.numberOfChannels, lenB=len*nCh*2+44, buf=new ArrayBuffer(lenB), view=new DataView(buf);
-            let pos=0; const setU32=d=>{view.setUint32(pos,d,true);pos+=4}, setU16=d=>{view.setUint16(pos,d,true);pos+=2};
-            setU32(0x46464952); setU32(lenB-8); setU32(0x45564157); setU32(0x20746d66); setU32(16); setU16(1); setU16(nCh);
-            setU32(abuffer.sampleRate); setU32(abuffer.sampleRate*2*nCh); setU16(nCh*2); setU16(16); setU32(0x61746164); setU32(lenB-pos-44);
-            const chs=[]; for(let i=0;i<nCh;i++) chs.push(abuffer.getChannelData(i));
-            let offset=44; while(offset<lenB){ for(let i=0;i<nCh;i++){ let s=Math.max(-1,Math.min(1,chs[i][(offset-44)/2/nCh])); view.setInt16(offset,s<0?s*32768:s*32767,true); offset+=2; }}
-            return new Blob([buf],{type:"audio/wav"});
+            const nCh = abuffer.numberOfChannels;
+            const length = len * nCh * 2 + 44;
+            const buffer = new ArrayBuffer(length);
+            const view = new DataView(buffer);
+            const channels = [];
+            let i, sample;
+            let offset = 0;
+            let pos = 0;
+
+            const setU32 = (data) => { view.setUint32(pos, data, true); pos += 4; };
+            const setU16 = (data) => { view.setUint16(pos, data, true); pos += 2; };
+
+            setU32(0x46464952); // "RIFF"
+            setU32(length - 8); // file length - 8
+            setU32(0x45564157); // "WAVE"
+
+            setU32(0x20746d66); // "fmt " chunk
+            setU32(16); // length = 16
+            setU16(1); // PCM (uncompressed)
+            setU16(nCh);
+            setU32(abuffer.sampleRate);
+            setU32(abuffer.sampleRate * 2 * nCh); // avg. bytes/sec
+            setU16(nCh * 2); // block-align
+            setU16(16); // 16-bit
+
+            setU32(0x61746164); // "data" - chunk
+            setU32(length - pos - 4); // chunk length
+
+            // Write interleaved data
+            for(i = 0; i < nCh; i++)
+                channels.push(abuffer.getChannelData(i));
+
+            // Use Int16Array for faster write
+            const samples = new Int16Array(buffer, 44, len * nCh);
+
+            let p = 0;
+            for (let i = 0; i < len; i++) {
+                for (let c = 0; c < nCh; c++) {
+                   let s = Math.max(-1, Math.min(1, channels[c][i]));
+                   // convert to 16-bit PCM
+                   samples[p++] = s < 0 ? s * 32768 : s * 32767;
+                }
+            }
+
+            return new Blob([buffer], {type: "audio/wav"});
         }
 
         /* ================= IMAGE TOOL ================= */
