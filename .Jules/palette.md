@@ -5,3 +5,7 @@
 ## 2024-05-24 - Navigation Roles
 **Learning:** Navigation rails often act more like tab lists than simple lists of links, especially in Single Page Apps (SPAs) where content is swapped dynamically without page reloads. Using `role="tablist"` and `aria-selected` provides much better context to screen readers than a generic list of buttons.
 **Action:** When auditing navigation in SPAs, consider if the interaction model is "tab-like". If so, upgrade semantics from simple buttons to ARIA tabs to communicate state (selected/active) properly.
+
+## 2024-05-25 - Icon-Only Button Accessibility
+**Learning:** Icon-only buttons (like start/stop recording circles) are completely invisible to screen readers if they rely solely on visual shapes or symbols (like ● or ■) without text content or labels.
+**Action:** Always add `aria-label` for screen readers and `title` for mouse users to icon-only buttons. This ensures the button's purpose is communicated to all users regardless of how they interact with the interface.
