@@ -1002,14 +1002,39 @@
         /* ================= IMAGE TOOL ================= */
         (function(){
             const inp=document.getElementById('imgInput'), prev=document.getElementById('imgPreview'); let f,img=new Image();
+
+            // Utility: Debounce to prevent UI freezing during rapid inputs
+            function debounce(func, wait) {
+                let timeout;
+                return function(...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), wait);
+                };
+            }
+
             inp.onchange=e=>{f=e.target.files[0]; if(f){img.src=URL.createObjectURL(f); img.onload=()=>{
                 document.getElementById('imgWidth').value=img.width; document.getElementById('imgHeight').value=img.height;
-                document.getElementById('img-step-upload').classList.add('hidden'); document.getElementById('img-step-editor').classList.remove('hidden'); updImg();
+                document.getElementById('img-step-upload').classList.add('hidden'); document.getElementById('img-step-editor').classList.remove('hidden');
+                updImgUI(); // Update UI immediately
+                processImg(); // Process image immediately on first load
             }}};
+
             document.getElementById('btnResetImg').onclick=()=>{document.getElementById('img-step-upload').classList.remove('hidden'); document.getElementById('img-step-editor').classList.add('hidden');};
-            ['imgFormat','imgQuality','imgWidth','imgHeight'].forEach(i=>document.getElementById(i).addEventListener('input',updImg));
-            function updImg(){
-                document.getElementById('imgQVal').textContent=document.getElementById('imgQuality').value;
+
+            const debouncedProcess = debounce(processImg, 100);
+
+            function handleInput() {
+                updImgUI();
+                debouncedProcess();
+            }
+
+            ['imgFormat','imgQuality','imgWidth','imgHeight'].forEach(i=>document.getElementById(i).addEventListener('input', handleInput));
+
+            function updImgUI() {
+                 document.getElementById('imgQVal').textContent=document.getElementById('imgQuality').value;
+            }
+
+            function processImg(){
                 const c=document.createElement('canvas'); c.width=document.getElementById('imgWidth').value; c.height=document.getElementById('imgHeight').value;
                 c.getContext('2d').drawImage(img,0,0,c.width,c.height);
                 c.toBlob(b=>{prev.src=URL.createObjectURL(b); document.getElementById('statOld').textContent=(f.size/1024).toFixed(0)+'KB'; document.getElementById('statNew').textContent=(b.size/1024).toFixed(0)+'KB'; document.getElementById('btnDownloadImg').onclick=()=>saveAs(b,`edit_${f.name}`);}, document.getElementById('imgFormat').value, document.getElementById('imgQuality').value/100);
