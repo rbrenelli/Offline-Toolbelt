@@ -431,8 +431,8 @@
                     <h3 id="audioName" style="margin-bottom:10px; font-size:1rem;">filename.mp3</h3>
                     
                     <div class="mode-toggle">
-                        <button id="btnManualMode" class="active" onclick="setTrimMode('manual')">Manual Trim</button>
-                        <button id="btnAutoMode" onclick="setTrimMode('auto')">Auto-Split</button>
+                        <button id="btnManualMode" class="active" onclick="setTrimMode('manual')" aria-pressed="true">Manual Trim</button>
+                        <button id="btnAutoMode" onclick="setTrimMode('auto')" aria-pressed="false">Auto-Split</button>
                     </div>
 
                     <div id="manualTrimUI">
@@ -507,8 +507,8 @@
             <h1>PDF Splitter & Merger</h1>
             <div class="card">
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <button class="action-btn" id="btnModeMerge" onclick="setPdfMode('merge')">Merge Mode</button>
-                    <button class="action-btn secondary" id="btnModeSplit" onclick="setPdfMode('split')">Split Mode</button>
+                    <button class="action-btn" id="btnModeMerge" onclick="setPdfMode('merge')" aria-pressed="true">Merge Mode</button>
+                    <button class="action-btn secondary" id="btnModeSplit" onclick="setPdfMode('split')" aria-pressed="false">Split Mode</button>
                 </div>
                 <div id="pdf-merge-ui">
                     <div class="drop-zone" onclick="document.getElementById('pdfMergeInput').click()" tabindex="0" role="button" aria-label="Upload PDFs to merge" onkeydown="if(event.key==='Enter'||event.key===' ') this.click()"><div>📄 Drop PDFs to Merge</div><input type="file" id="pdfMergeInput" accept=".pdf" multiple hidden></div>
@@ -755,10 +755,15 @@
         /* ================= PDF LOGIC ================= */
         let pdfDocs = []; let pdfSplitDoc = null;
         function setPdfMode(mode) {
-            document.getElementById('btnModeMerge').className = mode === 'merge' ? 'action-btn' : 'action-btn secondary';
-            document.getElementById('btnModeSplit').className = mode === 'split' ? 'action-btn' : 'action-btn secondary';
-            document.getElementById('pdf-merge-ui').classList.toggle('hidden', mode !== 'merge');
-            document.getElementById('pdf-split-ui').classList.toggle('hidden', mode !== 'split');
+            const isMerge = mode === 'merge';
+            document.getElementById('btnModeMerge').className = isMerge ? 'action-btn' : 'action-btn secondary';
+            document.getElementById('btnModeMerge').setAttribute('aria-pressed', isMerge);
+
+            document.getElementById('btnModeSplit').className = !isMerge ? 'action-btn' : 'action-btn secondary';
+            document.getElementById('btnModeSplit').setAttribute('aria-pressed', !isMerge);
+
+            document.getElementById('pdf-merge-ui').classList.toggle('hidden', !isMerge);
+            document.getElementById('pdf-split-ui').classList.toggle('hidden', isMerge);
         }
         document.getElementById('pdfMergeInput').onchange = async (e) => {
             for(const file of e.target.files) pdfDocs.push({ name: file.name, data: await file.arrayBuffer() });
@@ -855,10 +860,15 @@
 
         function setTrimMode(mode) {
             currentTrimMode = mode;
-            document.getElementById('btnManualMode').classList.toggle('active', mode === 'manual');
-            document.getElementById('btnAutoMode').classList.toggle('active', mode === 'auto');
-            document.getElementById('manualTrimUI').classList.toggle('hidden', mode !== 'manual');
-            document.getElementById('autoSplitUI').classList.toggle('hidden', mode !== 'auto');
+            const isManual = mode === 'manual';
+            document.getElementById('btnManualMode').classList.toggle('active', isManual);
+            document.getElementById('btnManualMode').setAttribute('aria-pressed', isManual);
+
+            document.getElementById('btnAutoMode').classList.toggle('active', !isManual);
+            document.getElementById('btnAutoMode').setAttribute('aria-pressed', !isManual);
+
+            document.getElementById('manualTrimUI').classList.toggle('hidden', !isManual);
+            document.getElementById('autoSplitUI').classList.toggle('hidden', isManual);
             document.getElementById('chunkResults').classList.add('hidden');
         }
 
