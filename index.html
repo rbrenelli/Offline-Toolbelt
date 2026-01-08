@@ -1007,12 +1007,20 @@
                 document.getElementById('img-step-upload').classList.add('hidden'); document.getElementById('img-step-editor').classList.remove('hidden'); updImg();
             }}};
             document.getElementById('btnResetImg').onclick=()=>{document.getElementById('img-step-upload').classList.remove('hidden'); document.getElementById('img-step-editor').classList.add('hidden');};
-            ['imgFormat','imgQuality','imgWidth','imgHeight'].forEach(i=>document.getElementById(i).addEventListener('input',updImg));
-            function updImg(){
-                document.getElementById('imgQVal').textContent=document.getElementById('imgQuality').value;
+
+            // ⚡ Bolt Optimization: Debounce heavy canvas operations to prevent UI freezing during slider adjustments
+            function debounce(func, wait) { let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
+
+            const processImg = debounce(() => {
                 const c=document.createElement('canvas'); c.width=document.getElementById('imgWidth').value; c.height=document.getElementById('imgHeight').value;
                 c.getContext('2d').drawImage(img,0,0,c.width,c.height);
                 c.toBlob(b=>{prev.src=URL.createObjectURL(b); document.getElementById('statOld').textContent=(f.size/1024).toFixed(0)+'KB'; document.getElementById('statNew').textContent=(b.size/1024).toFixed(0)+'KB'; document.getElementById('btnDownloadImg').onclick=()=>saveAs(b,`edit_${f.name}`);}, document.getElementById('imgFormat').value, document.getElementById('imgQuality').value/100);
+            }, 250);
+
+            ['imgFormat','imgQuality','imgWidth','imgHeight'].forEach(i=>document.getElementById(i).addEventListener('input',updImg));
+            function updImg(){
+                document.getElementById('imgQVal').textContent=document.getElementById('imgQuality').value;
+                processImg();
             }
         })();
         
