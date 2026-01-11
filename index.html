@@ -918,9 +918,8 @@
                     const srcData = audioBuffer.getChannelData(c);
                     const startSample = Math.floor(startTime * audioBuffer.sampleRate);
                     
-                    for(let i = 0; i < chunkLen; i++) {
-                        chunkData[i] = srcData[startSample + i];
-                    }
+                    // ⚡ Bolt Optimization: Use fast memory copy instead of loop
+                    chunkData.set(srcData.subarray(startSample, startSample + chunkLen));
                 }
                 
                 // Create blob
