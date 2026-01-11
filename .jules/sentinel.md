@@ -1,0 +1,4 @@
+## 2024-03-25 - Stored XSS in EPUB Status Reporting
+**Vulnerability:** A Stored Cross-Site Scripting (XSS) vulnerability was found in the `build_output_html` function in `script.js`. The function was rendering strings from the `fixedProblems` array directly into `innerHTML` using `status.map(x => <li>${x}</li>)`. Since `fixedProblems` contains data derived from untrusted user input (filenames, parsed HTML IDs from EPUBs), a malicious EPUB could inject script tags.
+**Learning:** Even when the primary file content is being sanitized or processed, auxiliary outputs like status messages or logs can become injection vectors if they include raw user input.
+**Prevention:** Always sanitize data before rendering it to `innerHTML`, even for "system" messages or logs. In this case, `escapeHtml()` was available but unused in the `map` function. Prefer using `textContent` or `document.createElement` when possible to avoid HTML parsing entirely.
