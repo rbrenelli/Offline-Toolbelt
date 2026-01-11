@@ -766,7 +766,7 @@
         };
         function renderPdfMergeList() {
             document.getElementById('pdf-merge-list').innerHTML = pdfDocs.map((doc, i) => `
-                <div class="pdf-list-item"><span>${i+1}. ${escapeHtml(doc.name)}</span><button style="color:red;border:none;background:none;cursor:pointer" onclick="pdfDocs.splice(${i},1);renderPdfMergeList()">✕</button></div>`).join('');
+                <div class="pdf-list-item"><span>${i+1}. ${escapeHtml(doc.name)}</span><button style="color:red;border:none;background:none;cursor:pointer" onclick="pdfDocs.splice(${i},1);renderPdfMergeList()" aria-label="Remove ${escapeHtml(doc.name)}" title="Remove ${escapeHtml(doc.name)}">✕</button></div>`).join('');
         }
         async function processPdfMerge() {
             if(pdfDocs.length < 2) return alert("Need 2+ PDFs");
