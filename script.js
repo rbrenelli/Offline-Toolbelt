@@ -43,7 +43,7 @@ function build_output_html(idx, status) {
     statusDiv.style.color = 'red'
     btn = false
   } else {
-    statusDiv.innerHTML = `<ul class="scroll">${status.map(x => `<li>${x}</li>`).join('')}</ul>`
+    statusDiv.innerHTML = `<ul class="scroll">${status.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>`
     statusDiv.style.color = 'green'
     btn = 'block'
   }
@@ -190,10 +190,10 @@ class EPUBBook {
       }
       if (language_tags.length === 0) {
         const language_tag = opf.createElement('dc:language')
-        language_tag.innerHTML = language
+        language_tag.textContent = language
         opf.getElementsByTagName('metadata')[0].appendChild(language_tag)
       } else {
-        language_tags[0].innerHTML = language
+        language_tags[0].textContent = language
       }
       if (language !== original_language) {
         this.files[opf_filename] = new XMLSerializer().serializeToString(opf)
