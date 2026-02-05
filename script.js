@@ -43,7 +43,15 @@ function build_output_html(idx, status) {
     statusDiv.style.color = 'red'
     btn = false
   } else {
-    statusDiv.innerHTML = `<ul class="scroll">${status.map(x => `<li>${x}</li>`).join('')}</ul>`
+    statusDiv.innerHTML = ''
+    const ul = document.createElement('ul')
+    ul.className = 'scroll'
+    status.forEach(msg => {
+      const li = document.createElement('li')
+      li.textContent = msg
+      ul.appendChild(li)
+    })
+    statusDiv.appendChild(ul)
     statusDiv.style.color = 'green'
     btn = 'block'
   }
